@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "PG-Practica1.sln"
+    "dotnet.defaultSolution": "UnityTessellation.sln"
 }
