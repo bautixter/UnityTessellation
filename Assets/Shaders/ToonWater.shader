@@ -16,6 +16,10 @@ Shader "Custom/ToonWater"
         _FoamMaxDistance("Foam Maximum Distance", Float) = 0.4
         _FoamMinDistance("Foam Minimum Distance", Float) = 0.04
         _FoamColor("Foam Color", Color) = (1,1,1,1)
+
+        _TessellationUniform ("Tessellation Uniform", Range(1,64)) = 1
+        _DisplacementStrength("Displacement Strength", Range(0,1)) = 0.1
+        _WaveSpeed ("Wave Speed", Float) = 1.0
     }
     SubShader
     {
@@ -30,9 +34,14 @@ Shader "Custom/ToonWater"
 			CGPROGRAM
             #define SMOOTHSTEP_AA 0.01
             #pragma vertex vert
+            #pragma hull hull
+            #pragma domain domain
             #pragma fragment frag
+          
+            #pragma target 4.6
 
             #include "UnityCG.cginc"
+            #include "Tessellation.cginc"
 
             float4 _DepthGradientShallow;
             float4 _DepthGradientDeep;
@@ -55,6 +64,9 @@ Shader "Custom/ToonWater"
 
             float _FoamColor;
 
+            float _TessellationUniform;
+            float _DisplacementStrength;
+            float _WaveSpeed;  
             struct v2f
             {
                 float4 vertex : SV_POSITION;
@@ -64,6 +76,12 @@ Shader "Custom/ToonWater"
                 float3 viewNormal : NORMAL;
             };
 
+            struct TessellationFactors
+            {
+                float edge[3] : SV_TessFactor;
+                float inside : SV_InsideTessFactor;
+            };
+
             float4 alphaBlend(float4 top, float4 bottom)
             {
             	float3 color = (top.rgb * top.a) + (bottom.rgb * (1 - top.a));
@@ -71,6 +89,7 @@ Shader "Custom/ToonWater"
             
             	return float4(color, alpha);
             }
+
             struct appdata
             {
                 float4 vertex : POSITION;
@@ -78,10 +97,10 @@ Shader "Custom/ToonWater"
                 float3 normal : NORMAL;
             };
 
+          
             v2f vert (appdata v)
             {
                 v2f o;
-
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.screenPosition = ComputeScreenPos(o.vertex);
                 o.noiseUV = TRANSFORM_TEX(v.uv, _SurfaceNoise);
@@ -89,7 +108,6 @@ Shader "Custom/ToonWater"
                 o.viewNormal = COMPUTE_VIEW_NORMAL;
                 return o;
             }
-
             float4 frag (v2f i) : SV_Target
             {
                 float existingDepth01 = tex2Dproj(_CameraDepthTexture,
@@ -126,6 +144,66 @@ Shader "Custom/ToonWater"
                 
 
             }
+
+            TessellationFactors patchConstantFunction(InputPatch<appdata,3> patch)
+            {
+                TessellationFactors f;
+                f.edge[0] = _TessellationUniform;
+                f.edge[1] = _TessellationUniform;
+                f.edge[2] = _TessellationUniform;
+                f.inside = _TessellationUniform;
+                return f;
+            }
+
+            [UNITY_domain("tri")]
+            [UNITY_outputcontrolpoints(3)]
+            [UNITY_outputtopology("triangle_cw")]
+            [UNITY_partitioning("integer")]
+            [UNITY_patchconstantfunc("patchConstantFunction")]
+            appdata hull (InputPatch<appdata,3> patch, uint id : SV_OutputControlPointID)
+            {
+                return patch[id];
+            }
+            v2f tessVert(appdata v)
+            {
+                v2f o;
+                o.vertex = v.vertex;
+                o.screenPosition = ComputeScreenPos(o.vertex);
+                o.noiseUV = TRANSFORM_TEX(v.uv, _SurfaceNoise);
+                o.distortUV = TRANSFORM_TEX(v.uv, _SurfaceDistortion);
+                o.viewNormal = COMPUTE_VIEW_NORMAL;
+                return o;
+            }
+            [UNITY_domain("tri")]
+            v2f domain(TessellationFactors factors, OutputPatch<appdata,3> patch,
+                float3 barycentricCoordinates : SV_DomainLocation)
+            {
+                appdata v;
+                
+               /*  float2 uv = v.uv + _Time.y * _WaveSpeed * 0.05;
+                float displacement = tex2Dlod(_SurfaceDistortion, float4(uv,0,0)).r;
+                v.vertex.xyz += v.normal * displacement * _DisplacementStrength;  */
+
+                #define MY_DOMAIN_PROGRAM_INTERPOLATE(fieldName) v.fieldName = \
+                    patch[0].fieldName * barycentricCoordinates.x + \
+                    patch[1].fieldName * barycentricCoordinates.y + \
+                    patch[2].fieldName * barycentricCoordinates.z;
+
+                MY_DOMAIN_PROGRAM_INTERPOLATE(vertex)
+                MY_DOMAIN_PROGRAM_INTERPOLATE(normal)
+                MY_DOMAIN_PROGRAM_INTERPOLATE(uv)
+               
+                  
+                
+                float2 uv = v.uv + _Time.y * _WaveSpeed * 0.05;
+                float displacement = tex2Dlod(_SurfaceNoise, float4(uv,0,0)).r;
+                v.vertex.y += displacement * _DisplacementStrength;
+        
+
+                return tessVert(v);
+            }
+            
+           
             ENDCG
         }
     }
