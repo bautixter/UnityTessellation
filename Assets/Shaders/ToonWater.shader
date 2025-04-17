@@ -101,8 +101,8 @@ Shader "Custom/ToonWater"
             v2f vert (appdata v)
             {
                 v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
-                o.screenPosition = ComputeScreenPos(o.vertex);
+                o.vertex = v.vertex;
+                o.screenPosition = o.vertex;
                 o.noiseUV = TRANSFORM_TEX(v.uv, _SurfaceNoise);
                 o.distortUV = TRANSFORM_TEX(v.uv, _SurfaceDistortion);
                 o.viewNormal = COMPUTE_VIEW_NORMAL;
@@ -145,7 +145,7 @@ Shader "Custom/ToonWater"
 
             }
 
-            TessellationFactors patchConstantFunction(InputPatch<appdata,3> patch)
+            TessellationFactors patchConstantFunction(InputPatch<v2f,3> patch)
             {
                 TessellationFactors f;
                 f.edge[0] = _TessellationUniform;
@@ -160,25 +160,25 @@ Shader "Custom/ToonWater"
             [UNITY_outputtopology("triangle_cw")]
             [UNITY_partitioning("integer")]
             [UNITY_patchconstantfunc("patchConstantFunction")]
-            appdata hull (InputPatch<appdata,3> patch, uint id : SV_OutputControlPointID)
+            v2f hull (InputPatch<v2f,3> patch, uint id : SV_OutputControlPointID)
             {
                 return patch[id];
             }
-            v2f tessVert(appdata v)
+            v2f tessVert(v2f v)
             {
                 v2f o;
-                o.vertex = v.vertex;
+                o.vertex = UnityObjectToClipPos(v.vertex);
                 o.screenPosition = ComputeScreenPos(o.vertex);
-                o.noiseUV = TRANSFORM_TEX(v.uv, _SurfaceNoise);
-                o.distortUV = TRANSFORM_TEX(v.uv, _SurfaceDistortion);
-                o.viewNormal = COMPUTE_VIEW_NORMAL;
+                o.noiseUV = v.noiseUV;
+                o.distortUV = v.distortUV;
+                o.viewNormal = v.viewNormal;
                 return o;
             }
             [UNITY_domain("tri")]
-            v2f domain(TessellationFactors factors, OutputPatch<appdata,3> patch,
+            v2f domain(TessellationFactors factors, OutputPatch<v2f,3> patch,
                 float3 barycentricCoordinates : SV_DomainLocation)
             {
-                appdata v;
+                v2f v;
                 
                /*  float2 uv = v.uv + _Time.y * _WaveSpeed * 0.05;
                 float displacement = tex2Dlod(_SurfaceDistortion, float4(uv,0,0)).r;
@@ -190,12 +190,13 @@ Shader "Custom/ToonWater"
                     patch[2].fieldName * barycentricCoordinates.z;
 
                 MY_DOMAIN_PROGRAM_INTERPOLATE(vertex)
-                MY_DOMAIN_PROGRAM_INTERPOLATE(normal)
-                MY_DOMAIN_PROGRAM_INTERPOLATE(uv)
-               
-                  
+                MY_DOMAIN_PROGRAM_INTERPOLATE(screenPosition)
+                MY_DOMAIN_PROGRAM_INTERPOLATE(noiseUV)
+                MY_DOMAIN_PROGRAM_INTERPOLATE(distortUV)
+                MY_DOMAIN_PROGRAM_INTERPOLATE(viewNormal)
+    
                 
-                float2 uv = v.uv + _Time.y * _WaveSpeed * 0.05;
+                float2 uv = v.noiseUV + _Time.y * _WaveSpeed * 0.05;
                 float displacement = tex2Dlod(_SurfaceNoise, float4(uv,0,0)).r;
                 v.vertex.y += displacement * _DisplacementStrength;
         
