@@ -94,9 +94,9 @@ Shader "Custom/SeagullGeometryShader"
                 float flapAngle = sin(_Time.y * _WingFlapSpeed) * radians(_WingFlapAmount);
                 
                 // Obtener direcciones
-                float3 forward = normalize(UnityObjectToWorldDir(float3(0, 0, 1)));
-                float3 up = normalize(UnityObjectToWorldDir(float3(0, 1, 0)));
-                float3 right = cross(forward, up);
+                float3 forward = float3(0, 0, 1);
+                float3 up = float3(0, 1, 0);
+                float3 right = float3(1, 0, 0);
                 
                 // Tamaños
                 float wingLength = _Size * 0.6;
