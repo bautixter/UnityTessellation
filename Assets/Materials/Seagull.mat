@@ -24,13 +24,19 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: e44411f862a917c41ac76d96020428b4, type: 3}
-        m_Scale: {x: 1, y: 1}
+        m_Texture: {fileID: 2800000, guid: cc0e5d3c8818d3f439ae3c24aba0831c, type: 3}
+        m_Scale: {x: 2.43, y: 3.49}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Size: 1
-    - _WingFlapAmount: 45
+    - _BodySize: 0.4
+    - _BodyWidth: 0.03
+    - _Cutoff: 0.35
+    - _FlightArea: 50
+    - _FlightSpeed: 5
+    - _Size: 1.5
+    - _WingFlapAmount: 50
     - _WingFlapSpeed: 2
-    m_Colors: []
+    m_Colors:
+    - _FlightHeight: {r: 5, g: 20, b: 0, a: 0}
   m_BuildTextureStacks: []
