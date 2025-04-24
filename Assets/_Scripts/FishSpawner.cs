@@ -22,10 +22,11 @@ public class FishSpawner : MonoBehaviour
         
         float x = Random.Range(-planeWidth/2, planeWidth/2);
         float y = Random.Range(-planeHeight/2, planeHeight/2);
-        float z = transform.position.z;
         
-        fish.transform.position = new Vector3(x, y, z);
-                
+        // Forzar posición Z local a cero
+        fish.transform.localPosition = new Vector3(x, y, 0f);
+        fish.transform.rotation = transform.rotation;
+
         // Añadir MeshFilter y MeshRenderer
         MeshFilter mf = fish.AddComponent<MeshFilter>();
         MeshRenderer mr = fish.AddComponent<MeshRenderer>();
@@ -35,6 +36,11 @@ public class FishSpawner : MonoBehaviour
         Mesh mesh = new Mesh();
         mesh.vertices = new Vector3[] { Vector3.zero };
         mesh.SetIndices(new int[] { 0 }, MeshTopology.Points, 0);
+        mesh.bounds = new Bounds(Vector3.zero, new Vector3(1, 1, 1));
         mf.mesh = mesh;
+
+        fish.AddComponent<FishMovement>();
+        fish.AddComponent<BoxCollider>();
+        fish.AddComponent<Rigidbody>().isKinematic = true;
     }
 }

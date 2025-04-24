@@ -12,6 +12,8 @@ Shader "Custom/FishShader"
     
     SubShader
     {
+        Cull Off
+
         Tags { 
             "RenderType"="TransparentCutout"
             "Queue"="AlphaTest"
@@ -21,8 +23,6 @@ Shader "Custom/FishShader"
         
         Pass
         {
-            Cull Off // Desactivar culling para ver ambos lados
-
             CGPROGRAM
             #pragma vertex vert
             #pragma geometry geom
@@ -109,13 +109,13 @@ Shader "Custom/FishShader"
                 // Emit body triangles
                 g2f o;
                 
-                o.pos = UnityObjectToClipPos(input[0].vertex + top);
-                o.uv = float2(0.7, 1.0);
-                o.normal = right;
-                triStream.Append(o);
-                
                 o.pos = UnityObjectToClipPos(input[0].vertex + bottom);
                 o.uv = float2(0.7, 0.0);
+                o.normal = right;
+                triStream.Append(o);
+
+                o.pos = UnityObjectToClipPos(input[0].vertex + top);
+                o.uv = float2(0.7, 1.0);
                 o.normal = right;
                 triStream.Append(o);
                 
@@ -131,13 +131,13 @@ Shader "Custom/FishShader"
                 o.normal = right;
                 triStream.Append(o);
                 
-                o.pos = UnityObjectToClipPos(input[0].vertex + mul(bodyRot, bottom + front));
-                o.uv = float2(0.0, 0.0);
+                o.pos = UnityObjectToClipPos(input[0].vertex + mul(bodyRot, top + front));
+                o.uv = float2(0.0, 1.0);
                 o.normal = right;
                 triStream.Append(o);
                 
-                o.pos = UnityObjectToClipPos(input[0].vertex + mul(bodyRot, top + front));
-                o.uv = float2(0.0, 1.0);
+                o.pos = UnityObjectToClipPos(input[0].vertex + mul(bodyRot, bottom + front));
+                o.uv = float2(0.0, 0.0);
                 o.normal = right;
                 triStream.Append(o);
                 
