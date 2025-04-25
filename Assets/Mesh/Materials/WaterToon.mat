@@ -73,7 +73,7 @@ Material:
     - _Cutoff: 0.5
     - _DepthMaxDistance: 2.18
     - _DetailNormalMapScale: 1
-    - _DisplacementStrength: 0.723
+    - _DisplacementStrength: 0.312
     - _DstBlend: 0
     - _FoamDistance: 0.4
     - _FoamMaxDistance: 0.5
@@ -81,7 +81,7 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _MaxCameraDistance: 10.3
+    - _MaxCameraDistance: 19.9
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
