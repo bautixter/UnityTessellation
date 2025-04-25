@@ -12,18 +12,18 @@ public class FishMovement : MonoBehaviour
 
     private void Start()
     {
-        // Buscar la esfera trigger de la escena
-        Collider[] triggers = FindObjectsOfType<Collider>();
-        foreach (Collider col in triggers)
+        // Buscar la esfera trigger con tag "fishCol"
+        GameObject sphereObj = GameObject.FindGameObjectWithTag("fishCol");
+        if (sphereObj != null)
         {
-            if (col.isTrigger && col.GetComponent<SphereCollider>() != null)
+            SphereCollider sphereCollider = sphereObj.GetComponent<SphereCollider>();
+            if (sphereCollider != null && sphereCollider.isTrigger)
             {
-                sphereTransform = col.transform;
-                sphereRadius = col.GetComponent<SphereCollider>().radius * Mathf.Max(
+                sphereTransform = sphereObj.transform;
+                sphereRadius = sphereCollider.radius * Mathf.Max(
                     sphereTransform.lossyScale.x,
                     Mathf.Max(sphereTransform.lossyScale.y, sphereTransform.lossyScale.z)
                 );
-                break;
             }
         }
         
