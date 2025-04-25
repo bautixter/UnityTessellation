@@ -18,6 +18,7 @@ Shader "Custom/ToonWater"
         _FoamColor("Foam Color", Color) = (1,1,1,1)
 
         _TessellationUniform ("Tessellation Uniform", Range(1,64)) = 1
+        _MaxCameraDistance ("Max Camera Distance", Range(0,100)) = 50
         _DisplacementStrength("Displacement Strength", Range(0,1)) = 0.1
         _WaveSpeed ("Wave Speed", Float) = 1.0
     }
@@ -65,6 +66,7 @@ Shader "Custom/ToonWater"
             float _FoamColor;
 
             float _TessellationUniform;
+            float _MaxCameraDistance;
             float _DisplacementStrength;
             float _WaveSpeed;  
             struct v2f
@@ -74,6 +76,7 @@ Shader "Custom/ToonWater"
                 float2 noiseUV : TEXCOORD0;
                 float2 distortUV : TEXCOORD1;
                 float3 viewNormal : NORMAL;
+                float cameraDistance : TEXCOORD3;
             };
 
             struct TessellationFactors
@@ -106,6 +109,9 @@ Shader "Custom/ToonWater"
                 o.noiseUV = TRANSFORM_TEX(v.uv, _SurfaceNoise);
                 o.distortUV = TRANSFORM_TEX(v.uv, _SurfaceDistortion);
                 o.viewNormal = COMPUTE_VIEW_NORMAL;
+                
+                float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
+                o.cameraDistance = distance(worldPos, _WorldSpaceCameraPos);
                 return o;
             }
             float4 frag (v2f i) : SV_Target
@@ -148,10 +154,21 @@ Shader "Custom/ToonWater"
             TessellationFactors patchConstantFunction(InputPatch<v2f,3> patch)
             {
                 TessellationFactors f;
-                f.edge[0] = _TessellationUniform;
-                f.edge[1] = _TessellationUniform;
-                f.edge[2] = _TessellationUniform;
-                f.inside = _TessellationUniform;
+
+                float tessClose = _TessellationUniform * 4.0;
+                float tessFar = _TessellationUniform * 0.1;
+
+                float distance01 = saturate(patch[0].cameraDistance / _MaxCameraDistance);
+                float tessLevel = lerp(tessClose, tessFar, distance01);
+                
+                f.edge[0] = tessLevel;
+
+                f.edge[1] = tessLevel;
+
+                f.edge[2] = tessLevel;
+
+                f.inside = tessLevel;
+                
                 return f;
             }
 
@@ -180,9 +197,7 @@ Shader "Custom/ToonWater"
             {
                 v2f v;
                 
-               /*  float2 uv = v.uv + _Time.y * _WaveSpeed * 0.05;
-                float displacement = tex2Dlod(_SurfaceDistortion, float4(uv,0,0)).r;
-                v.vertex.xyz += v.normal * displacement * _DisplacementStrength;  */
+              
 
                 #define MY_DOMAIN_PROGRAM_INTERPOLATE(fieldName) v.fieldName = \
                     patch[0].fieldName * barycentricCoordinates.x + \
@@ -195,11 +210,13 @@ Shader "Custom/ToonWater"
                 MY_DOMAIN_PROGRAM_INTERPOLATE(distortUV)
                 MY_DOMAIN_PROGRAM_INTERPOLATE(viewNormal)
     
-                
+                /* 
                 float2 uv = v.noiseUV + _Time.y * _WaveSpeed * 0.05;
                 float displacement = tex2Dlod(_SurfaceNoise, float4(uv,0,0)).r;
-                v.vertex.y += displacement * _DisplacementStrength;
-        
+                v.vertex.y += displacement * _DisplacementStrength; */
+                   float2 uv = v.noiseUV + _Time.y * _WaveSpeed * 0.05;
+                float displacement = tex2Dlod(_SurfaceDistortion, float4(uv,0,0)).r;
+                v.vertex.xyz += v.viewNormal * displacement * _DisplacementStrength;  
 
                 return tessVert(v);
             }
